@@ -43,14 +43,6 @@ jobs:
       - name: Build Tauri app
         run: npx tauri build --target ${{ matrix.target }}
 
-      - name: Find built files (Windows)
-        if: matrix.os == 'windows-latest'
-        run: find src-tauri/target -name "*.exe" -path "*/bundle/*" 2>/dev/null || true
-
-      - name: Find built files (macOS)
-        if: matrix.os == 'macos-latest'
-        run: find src-tauri/target -name "*.dmg" -path "*/bundle/*" 2>/dev/null || true
-
       - name: Upload Windows installer
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4

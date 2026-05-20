@@ -41,7 +41,7 @@ jobs:
         run: npm run build
 
       - name: Build Tauri app
-        run: cargo tauri build --target ${{ matrix.target }}
+        run: npx tauri build --target ${{ matrix.target }}
 
       - name: Find built files (Windows)
         if: matrix.os == 'windows-latest'

@@ -6,6 +6,7 @@ import type {
   StatisticsQuery,
   StatisticsResult,
   ImportPreview,
+  ExportCourseItem,
 } from '../types';
 
 export const api = {
@@ -38,4 +39,8 @@ export const api = {
     invoke<ImportPreview>('preview_excel_import', { filePath }),
   executeExcelImport: (filePath: string, mode: 'append' | 'replace') =>
     invoke<number>('execute_excel_import', { filePath, mode }),
+
+  // Export
+  exportCourses: (startDate: string, endDate: string) =>
+    invoke<ExportCourseItem[]>('export_courses', { startDate, endDate }),
 };

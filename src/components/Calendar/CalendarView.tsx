@@ -5,13 +5,17 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventInput, EventClickArg, EventDropArg } from '@fullcalendar/core';
 import zhLocale from '@fullcalendar/core/locales/zh-cn';
-import { Modal, message } from 'antd';
+import { Modal, message, Button, Radio, DatePicker, Space } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useCalendarStore } from '../../stores/calendarStore';
 import { useViewStore } from '../../stores/viewStore';
-import { parseDate, addWeeks, addMonths } from '../../utils/dateUtils';
+import { parseDate, addWeeks, addMonths, getWeekStart, getWeekEnd, getMonthStart, getMonthEnd, formatDate } from '../../utils/dateUtils';
+import { exportToExcel } from '../../utils/excelExport';
+import { api } from '../../api';
 import CourseEventContent from './CourseEventContent';
 import CourseDetail from '../Course/CourseDetail';
 import type { Course } from '../../types';
+import dayjs from 'dayjs';
 
 function generateEvents(
   courses: Course[],
@@ -65,6 +69,12 @@ export default function CalendarView() {
   const { setViewMode, setCurrentDate } = useViewStore();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
+  // Export state
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportPeriod, setExportPeriod] = useState<'week' | 'month' | 'semester' | 'custom'>('week');
+  const [exportRange, setExportRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const [exporting, setExporting] = useState(false);
+
   const holidaySet = useMemo(
     () => new Set(holidays.map((h) => h.date)),
     [holidays],
@@ -74,6 +84,51 @@ export default function CalendarView() {
     () => generateEvents(courses, holidaySet),
     [courses, holidaySet],
   );
+
+  const getExportRange = (): [string, string] => {
+    const now = new Date();
+    switch (exportPeriod) {
+      case 'week': {
+        const ws = getWeekStart(now);
+        return [formatDate(ws), formatDate(getWeekEnd(now))];
+      }
+      case 'month': {
+        return [formatDate(getMonthStart(now)), formatDate(getMonthEnd(now))];
+      }
+      case 'semester': {
+        const m = now.getMonth() + 1;
+        if (m >= 2 && m <= 7) {
+          return [`${now.getFullYear()}-02-01`, `${now.getFullYear()}-07-31`];
+        } else {
+          return [`${now.getFullYear()}-08-01`, `${now.getFullYear() + 1}-01-31`];
+        }
+      }
+      case 'custom':
+        if (exportRange) {
+          return [exportRange[0].format('YYYY-MM-DD'), exportRange[1].format('YYYY-MM-DD')];
+        }
+        return [formatDate(new Date()), formatDate(new Date())];
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const [start, end] = getExportRange();
+      const items = await api.exportCourses(start, end);
+      if (items.length === 0) {
+        message.warning('所选时段内没有课程');
+      } else {
+        exportToExcel(items as unknown as Record<string, unknown>[], '课表', `课表_${start}_${end}`);
+        message.success(`已导出 ${items.length} 条课程记录`);
+      }
+      setExportOpen(false);
+    } catch (e) {
+      message.error(String(e));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleEventClick = useCallback(
     (arg: EventClickArg) => {
@@ -121,6 +176,12 @@ export default function CalendarView() {
 
   return (
     <div style={{ height: '100%', background: '#fff', borderRadius: 8, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <Button icon={<DownloadOutlined />} onClick={() => setExportOpen(true)}>
+          导出课表
+        </Button>
+      </div>
+
       <FullCalendar
         plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
@@ -136,7 +197,7 @@ export default function CalendarView() {
           center: 'title',
           right: 'timeGridDay,timeGridWeek,dayGridMonth',
         }}
-        height="100%"
+        height="calc(100% - 40px)"
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}
         datesSet={(arg) => {
@@ -166,6 +227,39 @@ export default function CalendarView() {
       />
 
       <CourseDetail course={selectedCourse} open={!!selectedCourse} onClose={() => setSelectedCourse(null)} />
+
+      <Modal
+        title="导出课表到Excel"
+        open={exportOpen}
+        onOk={handleExport}
+        onCancel={() => setExportOpen(false)}
+        confirmLoading={exporting}
+        okText="导出"
+        cancelText="取消"
+      >
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 8, fontWeight: 500 }}>选择时段：</div>
+          <Radio.Group value={exportPeriod} onChange={(e) => setExportPeriod(e.target.value)}>
+            <Space direction="vertical">
+              <Radio value="week">本周</Radio>
+              <Radio value="month">本月</Radio>
+              <Radio value="semester">本学期</Radio>
+              <Radio value="custom">自定义范围</Radio>
+            </Space>
+          </Radio.Group>
+        </div>
+
+        {exportPeriod === 'custom' && (
+          <div>
+            <div style={{ marginBottom: 8, fontWeight: 500 }}>自定义日期范围：</div>
+            <DatePicker.RangePicker
+              value={exportRange}
+              onChange={(v) => setExportRange(v as [dayjs.Dayjs, dayjs.Dayjs] | null)}
+              style={{ width: '100%' }}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

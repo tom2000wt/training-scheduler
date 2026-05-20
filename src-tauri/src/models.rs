@@ -82,3 +82,18 @@ pub struct ConflictInfo {
     pub conflict_type: String,
     pub description: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportCourseItem {
+    pub date: String,
+    pub day_of_week: String,
+    pub subject: String,
+    pub grade: String,
+    pub class_name: String,
+    pub classroom: String,
+    pub start_time: String,
+    pub end_time: String,
+    pub hours: f64,
+    pub notes: String,
+}

@@ -38,6 +38,7 @@ fn main() {
             commands::statistics::get_statistics,
             commands::excel_import::preview_excel_import,
             commands::excel_import::execute_excel_import,
+            commands::export::export_courses,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

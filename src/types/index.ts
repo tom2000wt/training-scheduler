@@ -55,5 +55,18 @@ export interface ConflictInfo {
   description: string;
 }
 
+export interface ExportCourseItem {
+  date: string;
+  dayOfWeek: string;
+  subject: string;
+  grade: string;
+  className: string;
+  classroom: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
+  notes: string;
+}
+
 export type ViewMode = 'day' | 'week' | 'month';
 export type SidebarTab = 'calendar' | 'courses' | 'statistics' | 'import' | 'settings';

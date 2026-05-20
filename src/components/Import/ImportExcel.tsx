@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Card, Button, Table, Alert, Space, Radio, message } from 'antd';
-import { UploadOutlined, InboxOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownloadOutlined, InboxOutlined } from '@ant-design/icons';
 import { open } from '@tauri-apps/plugin-dialog';
 import { api } from '../../api';
+import { exportTemplate } from '../../utils/excelExport';
 import type { ImportPreview } from '../../types';
 
 export default function ImportExcel() {
@@ -62,6 +63,9 @@ export default function ImportExcel() {
           </div>
           <Button type="primary" icon={<UploadOutlined />} onClick={handleSelectFile} size="large">
             选择Excel文件
+          </Button>
+          <Button icon={<DownloadOutlined />} onClick={exportTemplate} size="large" style={{ marginLeft: 12 }}>
+            下载导入模板
           </Button>
         </div>
 

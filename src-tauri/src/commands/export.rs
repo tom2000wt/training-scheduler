@@ -3,7 +3,7 @@ use crate::models::{Course, ExportCourseItem, Holiday};
 use chrono::{Datelike, NaiveDate, Duration};
 use tauri::State;
 
-fn expand_courses(
+pub fn expand_courses(
     courses: &[Course],
     holidays: &[Holiday],
     start: &NaiveDate,

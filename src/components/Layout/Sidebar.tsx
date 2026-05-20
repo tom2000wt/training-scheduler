@@ -5,6 +5,7 @@ import {
   ImportOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import { useViewStore } from '../../stores/viewStore';
 import type { SidebarTab } from '../../types';
 
@@ -17,21 +18,24 @@ const menuItems: { key: SidebarTab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function Sidebar() {
-  const { currentTab, setTab } = useViewStore();
+  const { currentTab, setTab, sidebarCollapsed } = useViewStore();
 
   return (
-    <div className="app-sidebar">
-      <div className="app-sidebar-header">教师日程系统</div>
+    <div className={`app-sidebar${sidebarCollapsed ? ' collapsed' : ''}`}>
+      <div className="app-sidebar-header">
+        {sidebarCollapsed ? '南' : '南老师的课程管理系统'}
+      </div>
       <div className="app-sidebar-menu">
         {menuItems.map((item) => (
-          <div
-            key={item.key}
-            className={`app-sidebar-item ${currentTab === item.key ? 'active' : ''}`}
-            onClick={() => setTab(item.key)}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </div>
+          <Tooltip key={item.key} title={sidebarCollapsed ? item.label : ''} placement="right">
+            <div
+              className={`app-sidebar-item ${currentTab === item.key ? 'active' : ''}`}
+              onClick={() => setTab(item.key)}
+            >
+              {item.icon}
+              <span className="app-sidebar-label">{item.label}</span>
+            </div>
+          </Tooltip>
         ))}
       </div>
     </div>

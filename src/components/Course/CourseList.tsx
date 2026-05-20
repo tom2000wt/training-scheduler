@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag } from 'antd';
+import { Table, Button, Space, Tag, Popconfirm, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useCalendarStore } from '../../stores/calendarStore';
 import type { Course } from '../../types';
@@ -7,7 +7,7 @@ import CourseForm from './CourseForm';
 import CourseDetail from './CourseDetail';
 
 export default function CourseList() {
-  const { courses, addCourse, updateCourse } = useCalendarStore();
+  const { courses, addCourse, updateCourse, removeCourse } = useCalendarStore();
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [detailCourse, setDetailCourse] = useState<Course | null>(null);
@@ -35,6 +35,14 @@ export default function CourseList() {
         <Space>
           <a onClick={() => setDetailCourse(r)}>详情</a>
           <a onClick={() => { setEditingCourse(r); setFormOpen(true); }}>编辑</a>
+          <Popconfirm title="确定删除此课程？" onConfirm={async () => {
+            if (r.id != null) {
+              await removeCourse(r.id);
+              message.success('课程已删除');
+            }
+          }}>
+            <a style={{ color: '#ff4d4f' }}>删除</a>
+          </Popconfirm>
         </Space>
       ),
     },

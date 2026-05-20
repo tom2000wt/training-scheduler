@@ -19,6 +19,28 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   user-select: none;
+  transition: width 0.2s;
+}
+
+.app-sidebar.collapsed {
+  width: 60px;
+  min-width: 60px;
+}
+
+.app-sidebar.collapsed .app-sidebar-item {
+  justify-content: center;
+  padding: 14px 0;
+  font-size: 20px;
+  color: rgba(255,255,255,0.85);
+}
+
+.app-sidebar.collapsed .app-sidebar-item:hover,
+.app-sidebar.collapsed .app-sidebar-item.active {
+  color: #fff;
+}
+
+.app-sidebar.collapsed .app-sidebar-label {
+  display: none;
 }
 
 .app-sidebar-header {
@@ -76,4 +98,9 @@ html, body, #root {
   flex: 1;
   overflow: auto;
   padding: 16px 24px;
+}
+
+/* FullCalendar event overflow clipping */
+.fc-event {
+  overflow: hidden !important;
 }

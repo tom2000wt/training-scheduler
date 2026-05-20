@@ -1,3 +1,5 @@
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import { useViewStore } from '../../stores/viewStore';
 
 const titles: Record<string, string> = {
@@ -9,12 +11,20 @@ const titles: Record<string, string> = {
 };
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { currentTab } = useViewStore();
+  const { currentTab, sidebarCollapsed, toggleSidebar } = useViewStore();
 
   return (
     <div className="app-main">
       <div className="app-main-header">
-        <h2 style={{ margin: 0, fontSize: 18 }}>{titles[currentTab]}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Button
+            type="text"
+            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={toggleSidebar}
+            style={{ fontSize: 16, width: 40, height: 40 }}
+          />
+          <h2 style={{ margin: 0, fontSize: 18 }}>{titles[currentTab]}</h2>
+        </div>
       </div>
       <div className="app-main-content">{children}</div>
     </div>

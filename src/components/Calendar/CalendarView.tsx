@@ -14,13 +14,20 @@ import { exportToExcel } from '../../utils/excelExport';
 import { api } from '../../api';
 import CourseEventContent from './CourseEventContent';
 import CourseDetail from '../Course/CourseDetail';
-import type { Course } from '../../types';
+import type { Course, ScheduleException } from '../../types';
 import dayjs from 'dayjs';
 
 function generateEvents(
   courses: Course[],
   holidays: Set<string>,
+  exceptions: ScheduleException[],
 ): EventInput[] {
+  // Index exceptions by courseId -> originalDate for fast lookup
+  const exceptionMap = new Map<string, ScheduleException>();
+  for (const ex of exceptions) {
+    exceptionMap.set(`${ex.courseId}-${ex.originalDate}`, ex);
+  }
+
   const events: EventInput[] = [];
 
   for (const course of courses) {
@@ -32,13 +39,47 @@ function generateEvents(
 
     let current = new Date(startDate);
     while (current <= endDate) {
-      const dateStr = current.toISOString().slice(0, 10);
-      if (!holidays.has(dateStr)) {
+      const dateStr = formatDate(current);
+      const exKey = `${course.id}-${dateStr}`;
+      const ex = exceptionMap.get(exKey);
+
+      if (ex && ex.exceptionType === 'cancelled') {
+        // Skip cancelled
+        if (course.repeatType === 'weekly') {
+          current = addWeeks(current, 1);
+        } else if (course.repeatType === 'biweekly') {
+          current = addWeeks(current, 2);
+        } else {
+          break;
+        }
+        continue;
+      }
+
+      if (!holidays.has(dateStr) && !ex) {
+        // Normal occurrence (no exception)
+        const isRecurring = course.repeatType === 'weekly' || course.repeatType === 'biweekly';
         events.push({
-          id: `${course.id}-${dateStr}`,
+          id: isRecurring ? `${course.id}-${dateStr}` : `${course.id}`,
           title: course.subject,
           start: `${dateStr}T${course.startTime}`,
           end: `${dateStr}T${course.endTime}`,
+          backgroundColor: course.color,
+          borderColor: course.color,
+          textColor: '#fff',
+          extendedProps: {
+            courseId: course.id,
+            classroom: course.classroom,
+            grade: course.grade,
+            className: course.className,
+          },
+        });
+      } else if (ex && ex.exceptionType === 'rescheduled' && ex.newDate) {
+        // Rescheduled: emit at new date with original date in ID
+        events.push({
+          id: `${course.id}-${ex.originalDate}`,
+          title: course.subject,
+          start: `${ex.newDate}T${ex.newStartTime || course.startTime}`,
+          end: `${ex.newDate}T${ex.newEndTime || course.endTime}`,
           backgroundColor: course.color,
           borderColor: course.color,
           textColor: '#fff',
@@ -65,7 +106,11 @@ function generateEvents(
 }
 
 export default function CalendarView() {
-  const { courses, holidays, updateCourse } = useCalendarStore();
+  const courses = useCalendarStore((s) => s.courses);
+  const holidays = useCalendarStore((s) => s.holidays);
+  const exceptions = useCalendarStore((s) => s.exceptions);
+  const updateCourse = useCalendarStore((s) => s.updateCourse);
+  const addException = useCalendarStore((s) => s.addException);
   const { setViewMode, setCurrentDate } = useViewStore();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
@@ -80,9 +125,14 @@ export default function CalendarView() {
     [holidays],
   );
 
+  const allExceptions = useMemo(
+    () => Array.from(exceptions.values()).flat(),
+    [exceptions],
+  );
+
   const events = useMemo(
-    () => generateEvents(courses, holidaySet),
-    [courses, holidaySet],
+    () => generateEvents(courses, holidaySet, allExceptions),
+    [courses, holidaySet, allExceptions],
   );
 
   const getExportRange = (): [string, string] => {
@@ -154,24 +204,41 @@ export default function CalendarView() {
       const newEndTime = arg.event.end
         ? arg.event.end.toTimeString().slice(0, 5)
         : course.endTime;
+      const newDate = newStart.toISOString().slice(0, 10);
 
       Modal.confirm({
         title: '确认调课',
         content: `将 ${course.subject} 调整到 ${newStart.toLocaleDateString()} ${newStartTime}-${newEndTime}？`,
         onOk: async () => {
-          const updated = {
-            ...course,
-            startTime: newStartTime,
-            endTime: newEndTime,
-            startDate: newStart.toISOString().slice(0, 10),
-          };
-          await updateCourse(updated);
+          if (course.repeatType !== 'none') {
+            const oldStart = arg.oldEvent.start;
+            if (!oldStart) return;
+            const originalDate = oldStart.toISOString().slice(0, 10);
+            await addException({
+              courseId: course.id!,
+              originalDate,
+              newDate,
+              newStartTime,
+              newEndTime,
+              exceptionType: 'rescheduled',
+              reason: '',
+            });
+          } else {
+            const updated = {
+              ...course,
+              startTime: newStartTime,
+              endTime: newEndTime,
+              startDate: newDate,
+              endDate: newDate,
+            };
+            await updateCourse(updated);
+          }
           message.success('调课成功');
         },
         onCancel: () => arg.revert(),
       });
     },
-    [courses, updateCourse],
+    [courses, updateCourse, addException],
   );
 
   return (

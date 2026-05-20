@@ -10,6 +10,7 @@ import { useCalendarStore } from '../../stores/calendarStore';
 import { useViewStore } from '../../stores/viewStore';
 import { parseDate, addWeeks, addMonths } from '../../utils/dateUtils';
 import CourseEventContent from './CourseEventContent';
+import CourseDetail from '../Course/CourseDetail';
 import type { Course } from '../../types';
 
 function generateEvents(
@@ -164,26 +165,7 @@ export default function CalendarView() {
         }}
       />
 
-      <Modal
-        title="课程详情"
-        open={!!selectedCourse}
-        onCancel={() => setSelectedCourse(null)}
-        footer={null}
-        width={480}
-      >
-        {selectedCourse && (
-          <div>
-            <p><strong>科目：</strong>{selectedCourse.subject}</p>
-            <p><strong>年级：</strong>{selectedCourse.grade || '-'}</p>
-            <p><strong>班级：</strong>{selectedCourse.className || '-'}</p>
-            <p><strong>教室：</strong>{selectedCourse.classroom || '-'}</p>
-            <p><strong>时间：</strong>{selectedCourse.startTime} - {selectedCourse.endTime}</p>
-            <p><strong>重复：</strong>{selectedCourse.repeatType === 'weekly' ? '每周' : selectedCourse.repeatType === 'biweekly' ? '每两周' : '不重复'}</p>
-            <p><strong>日期：</strong>{selectedCourse.startDate}{selectedCourse.endDate ? ` ~ ${selectedCourse.endDate}` : '起'}</p>
-            <p><strong>备注：</strong>{selectedCourse.notes || '-'}</p>
-          </div>
-        )}
-      </Modal>
+      <CourseDetail course={selectedCourse} open={!!selectedCourse} onClose={() => setSelectedCourse(null)} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN';
 import Sidebar from './components/Layout/Sidebar';
 import MainLayout from './components/Layout/MainLayout';
 import CalendarView from './components/Calendar/CalendarView';
+import CourseList from './components/Course/CourseList';
 import { useViewStore } from './stores/viewStore';
 import { useCalendarStore } from './stores/calendarStore';
 import './App.css';
@@ -11,6 +12,7 @@ import './App.css';
 function renderContent(tab: string) {
   switch (tab) {
     case 'calendar': return <CalendarView />;
+    case 'courses': return <CourseList />;
     default: return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
         请在侧边栏选择功能模块

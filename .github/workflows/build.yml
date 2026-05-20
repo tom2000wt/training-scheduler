@@ -12,8 +12,10 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            ext: exe
           - os: macos-latest
             target: aarch64-apple-darwin
+            ext: dmg
 
     runs-on: ${{ matrix.os }}
 
@@ -32,8 +34,33 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@latest
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        run: cargo tauri build --target ${{ matrix.target }}
+
+      - name: Find built files (Windows)
+        if: matrix.os == 'windows-latest'
+        run: find src-tauri/target -name "*.exe" -path "*/bundle/*" 2>/dev/null || true
+
+      - name: Find built files (macOS)
+        if: matrix.os == 'macos-latest'
+        run: find src-tauri/target -name "*.dmg" -path "*/bundle/*" 2>/dev/null || true
+
+      - name: Upload Windows installer
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
         with:
-          args: --target ${{ matrix.target }}
+          name: windows-installer
+          path: src-tauri/target/**/bundle/nsis/*.exe
+
+      - name: Upload macOS installer
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: src-tauri/target/**/bundle/dmg/*.dmg

@@ -5,6 +5,9 @@ import Sidebar from './components/Layout/Sidebar';
 import MainLayout from './components/Layout/MainLayout';
 import CalendarView from './components/Calendar/CalendarView';
 import CourseList from './components/Course/CourseList';
+import StatisticsView from './components/Statistics/StatisticsView';
+import ImportExcel from './components/Import/ImportExcel';
+import HolidaysManager from './components/Settings/HolidaysManager';
 import { useViewStore } from './stores/viewStore';
 import { useCalendarStore } from './stores/calendarStore';
 import './App.css';
@@ -13,6 +16,9 @@ function renderContent(tab: string) {
   switch (tab) {
     case 'calendar': return <CalendarView />;
     case 'courses': return <CourseList />;
+    case 'statistics': return <StatisticsView />;
+    case 'import': return <ImportExcel />;
+    case 'settings': return <HolidaysManager />;
     default: return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
         请在侧边栏选择功能模块

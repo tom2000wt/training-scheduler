@@ -32,8 +32,8 @@ pub fn get_statistics(
                 Ok(StatisticsResult {
                     subject: row.get(0)?,
                     grade: row.get(1)?,
-                    total_hours: row.get::<_, f64>(2)?,
-                    course_count: row.get(3)?,
+                    total_hours: row.get::<_, f64>(3)?,
+                    course_count: row.get(2)?,
                 })
             },
         )
